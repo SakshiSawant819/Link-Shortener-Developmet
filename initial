@@ -1,0 +1,121 @@
+import java.io.*;
+import java.util.*;
+
+public class LinkShortener {
+    private Map<String, String> shortToLongMap; // Short URL -> Long URL
+    private Map<String, String> longToShortMap; // Long URL -> Short URL
+    private final String CHAR_POOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private final int BASE = CHAR_POOL.length();
+    private final String DATA_FILE = "url_mappings.txt";
+
+    public LinkShortener() {
+        shortToLongMap = new HashMap<>();
+        longToShortMap = new HashMap<>();
+        loadMappings(); // Load mappings from a file if available
+    }
+
+    // Method to shorten a long URL
+    public String shortenURL(String longUrl) {
+        if (longToShortMap.containsKey(longUrl)) {
+            return longToShortMap.get(longUrl); // Return existing short URL
+        }
+
+        String shortUrl = generateShortURL(longUrl.hashCode());
+        while (shortToLongMap.containsKey(shortUrl)) {
+            shortUrl = generateShortURL((shortUrl.hashCode() + longUrl.hashCode()) % Integer.MAX_VALUE);
+        }
+
+        shortToLongMap.put(shortUrl, longUrl);
+        longToShortMap.put(longUrl, shortUrl);
+        saveMappings(); // Persist mappings to a file
+        return shortUrl;
+    }
+
+    // Method to expand a short URL back to the original long URL
+    public String expandURL(String shortUrl) {
+        return shortToLongMap.getOrDefault(shortUrl, "Error: Invalid short URL.");
+    }
+
+    // Helper method to generate a short URL using Base62 encoding
+    private String generateShortURL(int hash) {
+        StringBuilder shortUrl = new StringBuilder();
+        hash = Math.abs(hash); // Ensure non-negative hash
+        while (hash > 0) {
+            shortUrl.append(CHAR_POOL.charAt(hash % BASE));
+            hash /= BASE;
+        }
+        return shortUrl.reverse().toString();
+    }
+
+    // Save mappings to a file for persistence
+    private void saveMappings() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(DATA_FILE))) {
+            for (Map.Entry<String, String> entry : shortToLongMap.entrySet()) {
+                writer.println(entry.getKey() + " " + entry.getValue());
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving mappings: " + e.getMessage());
+        }
+    }
+
+    // Load mappings from a file
+    private void loadMappings() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(DATA_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(" ", 2);
+                if (parts.length == 2) {
+                    shortToLongMap.put(parts[0], parts[1]);
+                    longToShortMap.put(parts[1], parts[0]);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("No previous mappings found. Starting fresh.");
+        } catch (IOException e) {
+            System.out.println("Error loading mappings: " + e.getMessage());
+        }
+    }
+
+    // Command-line interface (CLI) for user interaction
+    public void startCLI() {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.println("\nOptions:");
+            System.out.println("1. Shorten URL");
+            System.out.println("2. Expand URL");
+            System.out.println("3. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter a long URL: ");
+                    String longUrl = scanner.nextLine();
+                    String shortUrl = shortenURL(longUrl);
+                    System.out.println("Shortened URL: " + shortUrl);
+                    break;
+
+                case 2:
+                    System.out.print("Enter a short URL: ");
+                    String shortUrlInput = scanner.nextLine();
+                    String originalUrl = expandURL(shortUrlInput);
+                    System.out.println("Original URL: " + originalUrl);
+                    break;
+
+                case 3:
+                    System.out.println("Exiting. Goodbye!");
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        LinkShortener app = new LinkShortener();
+        app.startCLI();
+    }
+}
