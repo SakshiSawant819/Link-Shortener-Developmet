@@ -1,0 +1,36 @@
+No previous mappings found. Starting fresh.
+
+Options:
+1. Shorten URL
+2. Expand URL
+3. Exit
+Enter your choice: 1
+Enter a long URL: https://example.com/long-url-example
+Shortened URL: lJJ6S
+
+Options:
+1. Shorten URL
+2. Expand URL
+3. Exit
+Enter your choice: 2
+Enter a short URL: lJJ6S
+Original URL: https://example.com/long-url-example
+
+Options:
+1. Shorten URL
+2. Expand URL
+3. Exit
+Enter your choice: 2
+Enter a short URL: invalidShortURL
+Original URL: Error: Invalid short URL.
+
+Options:
+1. Shorten URL
+2. Expand URL
+3. Exit
+Enter your choice: 3
+Exiting. Goodbye!
+
+
+...Program finished with exit code 0
+Press ENTER to exit console.
